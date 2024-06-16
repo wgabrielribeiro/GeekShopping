@@ -1,0 +1,35 @@
+{
+  "profiles": {
+    "GeekShopping.ProductAPI": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:4440;https://localhost:4441"
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "Executavel": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Workspace\\Projetos\\GeekShopping-master\\GeekShopping.ProductAPI\\bin\\Debug\\net6.0\\GeekShopping.ProductAPI.exe"
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:9000",
+      "sslPort": 4440
+    }
+  }
+}
