@@ -1,0 +1,82 @@
+﻿using GeekShopping.Web.Models;
+using GeekShopping.Web.Services.IServices;
+using GeekShopping.Web.Utils;
+using System.Net.Http.Headers;
+
+namespace GeekShopping.Web.Services
+{
+    public class CartService : ICartService
+    {
+        private readonly HttpClient _httpClient;
+        public const string BasePath = "api/v1/Cart";
+        public CartService(HttpClient httpClient)
+        {
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        }
+
+        public async Task<CartViewModel> FindCartByUserId(string userId, string token)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var teste = $"{BasePath}/find-cart/{userId}";
+
+            var response = await _httpClient.GetAsync($"{BasePath}/find-cart/{userId}");
+
+            var tt = response.Content.ReadAsStringAsync().Result;
+
+            return await response.ReadContentAs<CartViewModel>();
+        }
+        public async Task<CartViewModel> AddItemToCart(CartViewModel cart, string token)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await _httpClient.PostAsJson($"{BasePath}/add-cart", cart);
+
+            if (response.IsSuccessStatusCode)
+                return await response.ReadContentAs<CartViewModel>();
+            else throw new Exception("Something went wrong calling the API:" + response.Content.ReadAsStringAsync().Result);
+        }
+        public async Task<CartViewModel> UpdateCart(CartViewModel cart, string token)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await _httpClient.PutAsJson($"{BasePath}/update-cart", cart);
+
+            if (response.IsSuccessStatusCode)
+                return await response.ReadContentAs<CartViewModel>();
+            else throw new Exception("Something went wrong calling the API:");
+        }
+        public async Task<bool> RemoveFromCart(long Cartid, string token)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await _httpClient.DeleteAsync($"{BasePath}/remove-cart/{Cartid}");
+
+            if (response.IsSuccessStatusCode)
+                return true; //await response.ReadContentAs<bool>();
+            else throw new Exception("Something went wrong calling the API:");
+        }
+
+
+        public Task<bool> ApplyCoupon(CartViewModel cart, string couponCode, string token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<CartViewModel> CheckOut(CartViewModel cart, string token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> ClearCart(string userId, string token)
+        {
+            throw new NotImplementedException();
+        }
+
+
+
+        public Task<bool> RemoveCoupon(string userId, string token)
+        {
+            throw new NotImplementedException();
+        }
+
+
+    }
+}

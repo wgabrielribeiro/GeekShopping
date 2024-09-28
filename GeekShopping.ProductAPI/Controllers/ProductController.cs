@@ -28,7 +28,6 @@ public class ProductController : ControllerBase
 
     //[HttpGet("FindAll")]
     [HttpGet]
-    [Authorize]
     public async Task<ActionResult<IEnumerable<ProductVO>>> FindAll()
     {
         _logger.LogInformation("Teststs");
