@@ -55,28 +55,45 @@ namespace GeekShopping.Web.Services
         }
 
 
-        public Task<bool> ApplyCoupon(CartViewModel cart, string couponCode, string token)
+        public async Task<bool> ApplyCoupon(CartViewModel cart, string token)
         {
-            throw new NotImplementedException();
-        }
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await _httpClient.PostAsJson($"{BasePath}/apply-coupon", cart);
 
-        public Task<CartViewModel> CheckOut(CartViewModel cart, string token)
+            var kkk = response.Content.ReadAsStringAsync().Result;
+
+            if (response.IsSuccessStatusCode)
+                return await response.ReadContentAs<bool>();
+
+            else throw new Exception("Something went wrong calling the API:");
+        }
+        public async Task<bool> RemoveCoupon(string userId, string token)
         {
-            throw new NotImplementedException();
-        }
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await _httpClient.DeleteAsync($"{BasePath}/remove-coupon/{userId}");
 
+            if (response.IsSuccessStatusCode)
+                return await response.ReadContentAs<bool>();
+
+            else throw new Exception("Something went wrong calling the API:");
+        }
+        
         public Task<bool> ClearCart(string userId, string token)
         {
             throw new NotImplementedException();
         }
 
-
-
-        public Task<bool> RemoveCoupon(string userId, string token)
+        public async Task<CartHeaderViewModel> CheckOut(CartHeaderViewModel model, string token)
         {
-            throw new NotImplementedException();
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await _httpClient.PostAsJson($"{BasePath}/Checkout", model);
+
+            var kkk = response.Content.ReadAsStringAsync().Result;
+
+            if (response.IsSuccessStatusCode)
+                return await response.ReadContentAs<CartHeaderViewModel>();
+
+            else throw new Exception("Something went wrong calling the API:");
         }
-
-
     }
 }
