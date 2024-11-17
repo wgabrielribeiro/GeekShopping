@@ -67,7 +67,7 @@ namespace GeekShopping.PaymentAPI.MessageConsumer
             try
             {
 
-                _messageSender.SendMessage(paymentresul, "orderPaymentResultQueue");
+                _messageSender.SendMessage(paymentresul);
             }
             catch (Exception)
             {

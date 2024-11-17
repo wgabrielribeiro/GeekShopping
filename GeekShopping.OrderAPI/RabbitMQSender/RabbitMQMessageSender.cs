@@ -12,6 +12,7 @@ namespace GeekShopping.OrderAPI.RabbitMQSender
         private readonly string _password;
         private readonly string _username;
         private IConnection _connection;
+        private const string ExchangeName = "FanoutPaymentUpdateExchange";
 
         public RabbitMQMessageSender()
         {

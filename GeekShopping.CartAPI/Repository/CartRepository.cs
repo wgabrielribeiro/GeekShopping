@@ -90,16 +90,21 @@ namespace GeekShopping.CartAPI.Repository
         {
             Cart cart = new()
             {
-                CartHeader = await _sqlContext.CartHeaders.FirstOrDefaultAsync(p => p.UserId == userId)
+                CartHeader = await _sqlContext.CartHeaders.FirstOrDefaultAsync(p => p.UserId == userId) ?? new CartHeader()
             };
+
+            if (cart.CartHeader.CouponCode is null)
+                cart.CartHeader.CouponCode = string.Empty;
+
+
             if (cart.CartHeader is null)
                 return null;
 
             cart.CartDetails = await _sqlContext.CartDetails.Where(p => p.CartHeaderId == cart.CartHeader.Id)
                 .Include(c => c.Product).ToListAsync();
 
-            if (!cart.CartDetails.Any())
-                return null;
+            //if (!cart.CartDetails.Any())
+            //    return null;
 
             return _mapper.Map<CartVO>(cart);
         }

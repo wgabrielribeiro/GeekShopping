@@ -1,7 +1,6 @@
-using GeekShopping.OrderAPI.MessageConsumer;
-using GeekShopping.OrderAPI.Model.Context;
-using GeekShopping.OrderAPI.RabbitMQSender;
-using GeekShopping.OrderAPI.Repository;
+using GeekShopping.Email.MessageConsumer;
+using GeekShopping.Email.Model.Context;
+using GeekShopping.Email.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -10,14 +9,12 @@ using RabbitMQ.Client;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 // Add services to the container.
 var connection = builder.Configuration["ConnectionStrings:Connection"];
 builder.Services.AddDbContext<SqlContext>(options => options.UseSqlServer(connection));
 
 var builderSql = new DbContextOptionsBuilder<SqlContext>();
 builderSql.UseSqlServer(connection).LogTo(Console.WriteLine, LogLevel.Information);
-
 
 var factory = new ConnectionFactory
 {
@@ -37,13 +34,10 @@ builder.Services.AddSingleton<IModel>(sp =>
 });
 
 // Registra o repositório
-builder.Services.AddSingleton(new OrderRepository(builderSql.Options));
+builder.Services.AddSingleton(new EmailRepository(builderSql.Options));
 
-// Registro do HostedService que consome o RabbitMQ
-builder.Services.AddHostedService<RabbitMQConsumerConsumer>();
+builder.Services.AddScoped<IEmailRepository, EmailRepository>();
 builder.Services.AddHostedService<RabbitMQPaymentConsumer>();
-builder.Services.AddSingleton<IRabbitMQMessageSender, RabbitMQMessageSender>();
-
 
 builder.Services.AddControllers();
 
@@ -110,6 +104,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();

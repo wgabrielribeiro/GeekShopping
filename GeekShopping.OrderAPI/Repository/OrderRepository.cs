@@ -1,5 +1,7 @@
-﻿using GeekShopping.OrderAPI.Model;
+﻿using Dapper;
+using GeekShopping.OrderAPI.Model;
 using GeekShopping.OrderAPI.Model.Context;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace GeekShopping.OrderAPI.Repository
@@ -27,6 +29,9 @@ namespace GeekShopping.OrderAPI.Repository
         public async Task UpdateOrderPaymentStatus(long orderHeaderId, bool status)
         {
             await using var _db = new SqlContext(_Context);
+
+            var ids = await _db.Headers.Select(h => h.Id).ToListAsync();
+
             var header = await _db.Headers.FirstOrDefaultAsync(o => o.Id == orderHeaderId);
 
             if (header != null)
