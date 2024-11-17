@@ -1,8 +1,6 @@
-using GeekShopping.OrderAPI.MessageConsumer;
-using GeekShopping.OrderAPI.Model.Context;
-using GeekShopping.OrderAPI.RabbitMQSender;
-using GeekShopping.OrderAPI.Repository;
-using Microsoft.EntityFrameworkCore;
+using GeekShopping.PaymentAPI.MessageConsumer;
+using GeekShopping.PaymentAPI.RabbitMQSender;
+using GeekShopping.PaymentProcessor;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RabbitMQ.Client;
@@ -11,38 +9,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-// Add services to the container.
-var connection = builder.Configuration["ConnectionStrings:Connection"];
-builder.Services.AddDbContext<SqlContext>(options => options.UseSqlServer(connection));
-
-var builderSql = new DbContextOptionsBuilder<SqlContext>();
-builderSql.UseSqlServer(connection);
-
-
-var factory = new ConnectionFactory
-{
-    HostName = "localhost",
-    UserName = "guest",
-    Password = "guest"
-};
-
 // Registra a conexão do RabbitMQ como Singleton
-builder.Services.AddSingleton<IConnection>(sp => factory.CreateConnection());
 
-// Registra o modelo de canal do RabbitMQ como Singleton
-builder.Services.AddSingleton<IModel>(sp =>
-{
-    var connection = sp.GetRequiredService<IConnection>();
-    return connection.CreateModel();
-});
-
-// Registra o repositório
-builder.Services.AddSingleton(new OrderRepository(builderSql.Options));
-
-// Registro do HostedService que consome o RabbitMQ
-builder.Services.AddHostedService<RabbitMQConsumerConsumer>();
+//builder.Services.AddSingleton<IConnection>(sp => factory.CreateConnection());
+//builder.Services.AddSingleton<IModel>(sp =>
+//{
+//    var connection = sp.GetRequiredService<IConnection>();
+//    return connection.CreateModel();
+//});
+builder.Services.AddHostedService<RabbitMQPaymentConsumer>();
+builder.Services.AddSingleton<IProcessPayment, ProcessPayment>();
 builder.Services.AddSingleton<IRabbitMQMessageSender, RabbitMQMessageSender>();
-
 
 builder.Services.AddControllers();
 
@@ -97,6 +74,9 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
@@ -108,7 +88,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();
