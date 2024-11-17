@@ -80,11 +80,17 @@ namespace GeekShopping.Web.Controllers
 
             var response = await _cartService.CheckOut(model.CartHeader, token);
 
-            if (response is not null)
+            if (response is not null && response.GetType() == typeof(string))
+            {
+                TempData["Error"] = response;
+                return RedirectToAction(nameof(CheckoutIndex));
+            }
+            else if (response is not null)
             {
                 return RedirectToAction(nameof(Confirmation));
             }
-            return View(model);
+
+                return View(model);
         }
         [HttpGet]
         public async Task<IActionResult> Confirmation()

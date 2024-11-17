@@ -1,3 +1,4 @@
+using GeekShopping.CartAPI.Data.ValueObjects;
 using GeekShopping.CartAPI.Messages;
 using GeekShopping.CartAPI.Model.Data.ValueObjects;
 using GeekShopping.CartAPI.RabbitMQSender;
@@ -13,12 +14,14 @@ namespace GeekShopping.CartAPI.Controllers
     {
         private readonly ILogger<CartController> _logger;
         private readonly ICartRepository _cartRepository;
+        private readonly ICouponRepository _couponRepository;
         private readonly IRabbitMQMessageSender _rabbitMQMessageSender;
 
-        public CartController(ILogger<CartController> logger, ICartRepository cartRepository, IRabbitMQMessageSender rabbitMQMessageSender)
+        public CartController(ILogger<CartController> logger, ICartRepository cartRepository, ICouponRepository couponRepository, IRabbitMQMessageSender rabbitMQMessageSender)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _cartRepository = cartRepository ?? throw new ArgumentNullException(nameof(cartRepository));
+            _couponRepository = couponRepository ?? throw new ArgumentNullException(nameof(couponRepository));
             _rabbitMQMessageSender = rabbitMQMessageSender ?? throw new ArgumentNullException(nameof(rabbitMQMessageSender));
         }
 
@@ -87,7 +90,7 @@ namespace GeekShopping.CartAPI.Controllers
 
             return Ok(status);
         }
-        
+
         [HttpDelete("remove-coupon/{userId}")]
         public async Task<ActionResult<CartVO>> RemoveCoupon(string userId)
         {
@@ -103,10 +106,24 @@ namespace GeekShopping.CartAPI.Controllers
         [HttpPost("checkout")]
         public async Task<ActionResult<CheckoutHeaderVO>> Checkout(CheckoutHeaderVO vo)
         {
-            if(vo?.UserId == null) return BadRequest();
+            string token = Request.Headers["Authorization"];
+
+            if (vo?.UserId == null) return BadRequest();
 
             var cart = await _cartRepository.FindCartByUserId(vo.UserId);
             if (cart == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(vo.CouponCode))
+            {
+                CouponVO coupon = await _couponRepository.GetCoupon(vo.CouponCode, token.Replace("Bearer", "").Trim());
+
+                if (vo.DiscountAmount != coupon.DiscountAmount)
+                {
+                    return StatusCode(412);
+                }
+            }
+
+
             vo.CartDetails = cart.CartDetails;
             vo.DateTime = DateTime.Now;
 

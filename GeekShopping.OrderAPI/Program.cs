@@ -1,33 +1,48 @@
-using AutoMapper;
-using GeekShopping.CartAPI.Config;
-using GeekShopping.CartAPI.Model.Context;
-using GeekShopping.CartAPI.RabbitMQSender;
-using GeekShopping.CartAPI.Repository;
+using GeekShopping.OrderAPI.MessageConsumer;
+using GeekShopping.OrderAPI.Model.Context;
+using GeekShopping.OrderAPI.Repository;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using RabbitMQ.Client;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
 
 // Add services to the container.
 var connection = builder.Configuration["ConnectionStrings:Connection"];
 builder.Services.AddDbContext<SqlContext>(options => options.UseSqlServer(connection));
 
-IMapper mapper = MappingConfig.RegisterMap().CreateMapper();
+var builderSql = new DbContextOptionsBuilder<SqlContext>();
+builderSql.UseSqlServer(connection);
 
-builder.Services.AddSingleton(mapper);
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-builder.Services.AddScoped<ICartRepository, CartRepository>();
-builder.Services.AddScoped<ICouponRepository, CouponRepository>();
-builder.Services.AddSingleton<IRabbitMQMessageSender, RabbitMQMessageSender>();
+var factory = new ConnectionFactory
+{
+    HostName = "localhost",
+    UserName = "guest",
+    Password = "guest"
+};
+
+// Registra a conexão do RabbitMQ como Singleton
+builder.Services.AddSingleton<IConnection>(sp => factory.CreateConnection());
+
+// Registra o modelo de canal do RabbitMQ como Singleton
+builder.Services.AddSingleton<IModel>(sp =>
+{
+    var connection = sp.GetRequiredService<IConnection>();
+    return connection.CreateModel();
+});
+
+// Registra o repositório
+builder.Services.AddSingleton(new OrderRepository(builderSql.Options));
+
+// Registro do HostedService que consome o RabbitMQ
+builder.Services.AddHostedService<RabbitMQConsumerConsumer>();
+
 
 builder.Services.AddControllers();
-
-builder.Services.AddHttpClient<ICouponRepository, CouponRepository>(s => s.BaseAddress =
-    new Uri(builder.Configuration["ServiceUrl:CouponAPI"])
-    );
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", opt =>
@@ -80,25 +95,18 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-//builder.Services.AddControllers();
-//// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-//builder.Services.AddEndpointsApiExplorer();
-//builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-app.UseSwagger();
-app.UseSwaggerUI();
-//}
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
-
-app.UseRouting();
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllers();
